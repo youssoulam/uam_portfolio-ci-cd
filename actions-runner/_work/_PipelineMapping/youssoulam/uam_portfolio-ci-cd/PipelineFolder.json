@@ -1,0 +1,12 @@
+﻿{
+  "repositoryName": "youssoulam/uam_portfolio-ci-cd",
+  "pipelineDirectory": "uam_portfolio-ci-cd",
+  "workspaceDirectory": "uam_portfolio-ci-cd/uam_portfolio-ci-cd",
+  "repositories": {
+    "youssoulam/uam_portfolio-ci-cd": {
+      "repositoryPath": "uam_portfolio-ci-cd/uam_portfolio-ci-cd",
+      "lastRunOn": "07/29/2025 14:14:58 +00:00"
+    }
+  },
+  "lastRunOn": "07/29/2025 14:14:58 +00:00"
+}
