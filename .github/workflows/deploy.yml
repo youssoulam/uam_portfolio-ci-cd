@@ -35,9 +35,13 @@ jobs:
         run: |
           rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/uam_deploy
 
-      - name: Construire et lancer le conteneur sur le MacBook
+      - name: Vérifier que Docker est démarré et lancer le conteneur
         run: |
           ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
+            if ! docker info > /dev/null 2>&1; then
+              echo "Docker ne semble pas démarré. Veuillez démarrer Docker avant de continuer."
+              exit 1
+            fi
             cd /home/${{ secrets.SSH_USER }}/uam_deploy
             docker rm -f uam-nginx || true
             docker build -t uam-nginx .
