@@ -1,0 +1,30 @@
+name: Déploiement local sur MacBook
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Cloner le dépôt
+      uses: actions/checkout@v3
+
+    - name: Ajouter l’hôte SSH dans known_hosts
+      run: |
+        ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Copier les fichiers vers le MacBook
+      run: |
+        rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }}" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/uam_deploy
+
+    - name: Construire et lancer le conteneur sur le MacBook
+      run: |
+        ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd /home/${USER}/uam_deploy
+          docker rm -f uam-nginx || true
+          docker build -t uam-nginx .
+          docker run -d --name uam-nginx -p 30081:80 uam-nginx
+        EOF
