@@ -1,4 +1,4 @@
-name: Déploiement local sur MacBook
+name: Déploiement local avec runner self-hosted
 
 on:
   push:
@@ -6,44 +6,14 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Cloner le dépôt
         uses: actions/checkout@v3
 
-      - name: Configurer la clé SSH privée
+      - name: Construire et lancer le conteneur Docker localement
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Afficher les variables SSH
-        run: |
-          echo "SSH_HOST=${{ secrets.SSH_HOST }}"
-          echo "SSH_PORT=${{ secrets.SSH_PORT }}"
-
-      - name: Ajouter l’hôte SSH dans known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts || true
-
-      - name: Tester la connectivité SSH (ping)
-        run: ping -c 3 ${{ secrets.SSH_HOST }}
-
-      - name: Copier les fichiers vers le MacBook
-        run: |
-          rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/uam_deploy
-
-      - name: Vérifier que Docker est démarré et lancer le conteneur
-        run: |
-          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << EOF
-            if ! docker info > /dev/null 2>&1; then
-              echo "Docker ne semble pas démarré. Veuillez démarrer Docker avant de continuer."
-              exit 1
-            fi
-            cd /home/${{ secrets.SSH_USER }}/uam_deploy
-            docker rm -f uam-nginx || true
-            docker build -t uam-nginx .
-            docker run -d --name uam-nginx -p 30081:80 uam-nginx
-          EOF
+          docker rm -f uam-nginx || true
+          docker build -t uam-nginx .
+          docker run -d --name uam-nginx -p 30081:80 uam-nginx
