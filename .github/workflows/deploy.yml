@@ -12,8 +12,24 @@ jobs:
       - name: Cloner le dépôt
         uses: actions/checkout@v3
 
-      - name: Construire et lancer le conteneur Docker localement
+      - name: Construire l’image Docker
         run: |
           docker rm -f uam-nginx || true
           docker build -t uam-nginx .
+
+      - name: Installer Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy -y
+
+      - name: Scanner l’image Docker avec Trivy
+        run: |
+          trivy image uam-nginx
+
+      - name: Lancer le conteneur Docker
+        run: |
           docker run -d --name uam-nginx -p 30081:80 uam-nginx
